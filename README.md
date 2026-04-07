@@ -1,3 +1,8 @@
-Plan der Arbeit
+# Plan der Arbeit
 
-28.04.2026 - Tic-Tac-Toe minigame: script & UI
+## 28.04.2026
+### Tic-Tac-Toe minigame: 
+
+```
+script & UI
+```
