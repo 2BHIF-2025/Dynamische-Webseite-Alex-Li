@@ -2,66 +2,65 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mini Games Hub</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-
-<!-- Navbar -->
-<nav class="navbar navbar-dark bg-dark px-4">
+ 
+<nav class="navbar navbar-dark px-4 py-3">
   <span class="navbar-brand mb-0 h1">🎮 Mini Games Hub</span>
+  <a href="highscores.html" class="btn btn-sm btn-glow" style="background:rgba(99,102,241,0.2);border:1px solid var(--primary);color:var(--primary)">🏆 Highscores</a>
 </nav>
-
-<!-- Hero -->
-<div class="container text-center mt-5">
-  <h1 class="text-light">Wähle dein Spiel</h1>
-  <p class="text-secondary">Spiele, sammle Punkte und erreiche Highscores!</p>
+ 
+<div class="container text-center mt-5 mb-3">
+  <h1 class="text-light" style="font-size:2.6rem">Wähle dein Spiel</h1>
+  <p style="color:var(--muted)">Spiele, sammle Punkte und erreiche Highscores!</p>
 </div>
-
-<!-- Game Cards -->
-<div class="container mt-4">
-  <div class="row g-4">
-
-    <!-- Tic Tac Toe -->
-    <div class="col-md-3">
-      <div class="card game-card text-center p-3">
-        <h4>❌⭕ Tic-Tac-Toe</h4>
-        <p>Besiege deinen Gegner!</p>
-        <a href="tic.html" class="btn btn-primary">Spielen</a>
+ 
+<div class="container mt-4 pb-5">
+  <div class="row g-4 justify-content-center">
+ 
+    <div class="col-md-3 col-sm-6">
+      <div class="card game-card text-center p-4 h-100">
+        <div style="font-size:2.8rem;margin-bottom:.75rem">❌⭕</div>
+        <h4>Tic-Tac-Toe</h4>
+        <p>Besiege deinen Gegner in der Klassiker-Challenge!</p>
+        <a href="tic.html" class="btn btn-glow btn-primary mt-auto">Spielen</a>
       </div>
     </div>
-
-    <!-- Memory -->
-    <div class="col-md-3">
-      <div class="card game-card text-center p-3">
-        <h4>🧠 Memory</h4>
-        <p>Finde alle Paare!</p>
-        <a href="memory.html" class="btn btn-success">Spielen</a>
+ 
+    <div class="col-md-3 col-sm-6">
+      <div class="card game-card text-center p-4 h-100">
+        <div style="font-size:2.8rem;margin-bottom:.75rem">🧠</div>
+        <h4>Memory</h4>
+        <p>Finde alle Paare mit möglichst wenigen Zügen!</p>
+        <a href="memory.html" class="btn btn-glow btn-success mt-auto">Spielen</a>
       </div>
     </div>
-
-    <!-- Zahlenraten -->
-    <div class="col-md-3">
-      <div class="card game-card text-center p-3">
-        <h4>🔢 Zahlenraten</h4>
-        <p>Errate die Zahl!</p>
-        <a href="guess.html" class="btn btn-warning">Spielen</a>
+ 
+    <div class="col-md-3 col-sm-6">
+      <div class="card game-card text-center p-4 h-100">
+        <div style="font-size:2.8rem;margin-bottom:.75rem">🔢</div>
+        <h4>Zahlenraten</h4>
+        <p>Errate die geheime Zahl in so wenig Versuchen wie möglich!</p>
+        <a href="guess.html" class="btn btn-glow btn-warning mt-auto">Spielen</a>
       </div>
     </div>
-
-    <!-- Quiz -->
-    <div class="col-md-3">
-      <div class="card game-card text-center p-3">
-        <h4>❓ Quiz</h4>
-        <p>Teste dein Wissen!</p>
-        <a href="quiz.html" class="btn btn-danger">Spielen</a>
+ 
+    <div class="col-md-3 col-sm-6">
+      <div class="card game-card text-center p-4 h-100">
+        <div style="font-size:2.8rem;margin-bottom:.75rem">❓</div>
+        <h4>Quiz</h4>
+        <p>Teste dein Allgemeinwissen mit 10 Fragen!</p>
+        <a href="quiz.html" class="btn btn-glow btn-danger mt-auto">Spielen</a>
       </div>
     </div>
-
+ 
   </div>
 </div>
-
+ 
 </body>
 </html>
+ 
