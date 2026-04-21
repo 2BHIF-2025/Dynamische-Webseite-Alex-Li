@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic-Tac-Toe – Mini Games Hub</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="navbar navbar-dark px-4 py-3">
+  <a href="index.html" class="navbar-brand">🎮 Mini Games Hub</a>
+  <a href="highscores.html" class="btn btn-sm btn-glow" style="background:rgba(99,102,241,0.2);border:1px solid var(--primary);color:var(--primary)">🏆 Highscores</a>
+</nav>
+
+<div class="container text-center mt-5 pb-5">
+  <div class="glass-card p-4 mx-auto" style="max-width:420px">
+    
+    <h2 class="mb-1">❌⭕ Tic-Tac-Toe</h2>
+    <p id="status" style="color:var(--muted);min-height:1.5rem">Spieler <span style="color:var(--primary)">X</span> ist dran</p>
+
+    <div class="tic-grid mt-2 mb-3" id="board">
+      <button class="cell" data-i="0"></button>
+      <button class="cell" data-i="1"></button>
+      <button class="cell" data-i="2"></button>
+      <button class="cell" data-i="3"></button>
+      <button class="cell" data-i="4"></button>
+      <button class="cell" data-i="5"></button>
+      <button class="cell" data-i="6"></button>
+      <button class="cell" data-i="7"></button>
+      <button class="cell" data-i="8"></button>
+    </div>
+
+    <div id="score-row" class="d-flex justify-content-around mb-3" style="font-family:'Rajdhani',sans-serif">
+      <div>
+        <div style="color:var(--primary);font-size:1.6rem;font-weight:700" id="score-x">0</div>
+        <div style="color:var(--muted);font-size:.8rem">SPIELER X</div>
+      </div>
+      <div>
+        <div style="color:var(--muted);font-size:1.6rem;font-weight:700" id="score-draw">0</div>
+        <div style="color:var(--muted);font-size:.8rem">UNENTSCHIEDEN</div>
+      </div>
+      <div>
+        <div style="color:var(--danger);font-size:1.6rem;font-weight:700" id="score-o">0</div>
+        <div style="color:var(--muted);font-size:.8rem">SPIELER O</div>
+      </div>
+    </div>
+
+    <button class="btn btn-glow btn-warning w-100" id="restart">Neustart</button>
+
+    <!-- Save highscore -->
+    <div id="save-box" class="mt-3" style="display:none">
+      <p style="color:var(--secondary);font-weight:600">🏆 Glückwunsch! Runde gewonnen!</p>
+      <div class="d-flex gap-2">
+        <input type="text" id="hs-name" class="form-control guess-input" placeholder="Dein Name" style="font-size:1rem">
+        <button class="btn btn-glow btn-primary" id="save-btn">Speichern</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="tic.js">
+const WINS = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+let board, turn, gameOver, scores = {X:0,O:0,D:0}, rounds = 0;
+
+function init() {
+  board = Array(9).fill('');
+  turn = 'X';
+  gameOver = false;
+  document.querySelectorAll('.cell').forEach(c => {
+    c.textContent = ''; c.className = 'cell'; c.disabled = false;
+  });
+  setStatus(`Spieler <span style="color:var(--${turn==='X'?'primary':'danger'})">${turn}</span> ist dran`);
+  document.getElementById('save-box').style.display = 'none';
+}
+
+function setStatus(html) { document.getElementById('status').innerHTML = html; }
+
+function checkWin() {
+  for (const [a,b,c] of WINS) {
+    if (board[a] && board[a]===board[b] && board[a]===board[c]) return [a,b,c];
+  }
+  return null;
+}
+
+document.getElementById('board').addEventListener('click', e => {
+  const cell = e.target.closest('.cell');
+  if (!cell || gameOver) return;
+  const i = +cell.dataset.i;
+  if (board[i]) return;
+
+  board[i] = turn;
+  cell.textContent = turn;
+  cell.classList.add(turn.toLowerCase());
+
+  const win = checkWin();
+  if (win) {
+    gameOver = true;
+    win.forEach(idx => document.querySelector(`[data-i="${idx}"]`).classList.add('win'));
+    const color = turn==='X' ? 'var(--primary)' : 'var(--danger)';
+    setStatus(`<span style="color:${color}">Spieler ${turn} gewinnt! 🎉</span>`);
+    scores[turn]++;
+    rounds++;
+    document.getElementById(`score-${turn.toLowerCase()}`).textContent = scores[turn];
+    if (rounds % 3 === 0) document.getElementById('save-box').style.display = 'block';
+    document.querySelectorAll('.cell').forEach(c => c.disabled = true);
+    return;
+  }
+  if (board.every(v => v)) {
+    gameOver = true;
+    setStatus('<span style="color:var(--muted)">Unentschieden 🤝</span>');
+    scores.D++;
+    document.getElementById('score-draw').textContent = scores.D;
+    return;
+  }
+  turn = turn==='X' ? 'O' : 'X';
+  setStatus(`Spieler <span style="color:var(--${turn==='X'?'primary':'danger'})">${turn}</span> ist dran`);
+});
+
+document.getElementById('restart').addEventListener('click', init);
+
+document.getElementById('save-btn').addEventListener('click', () => {
+  const name = document.getElementById('hs-name').value.trim() || 'Anonym';
+  const hs = JSON.parse(localStorage.getItem('highscores') || '[]');
+  hs.push({ game: 'Tic-Tac-Toe', name, score: rounds, ts: Date.now() });
+  hs.sort((a,b) => b.score - a.score);
+  localStorage.setItem('highscores', JSON.stringify(hs.slice(0,50)));
+  document.getElementById('save-box').innerHTML = `<p style="color:var(--secondary)">✅ Gespeichert! <a href="highscores.html" style="color:var(--primary)">Highscores ansehen →</a></p>`;
+});
+
+init();
+</script>
+</body>
+</html>
