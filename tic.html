@@ -3,133 +3,227 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tic-Tac-Toe – Mini Games Hub</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <title>Tic-Tac-Toe</title>
+  <style>
+    :root {
+      --primary: #6366f1; --red: #ef4444; --yellow: #f59e0b;
+      --green: #22c55e; --text: #e2e8f0; --muted: #94a3b8;
+      --card: rgba(30,41,59,0.85); --border: rgba(255,255,255,0.08);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: linear-gradient(135deg, #0f172a, #020617);
+      color: var(--text); font-family: 'Segoe UI', sans-serif; min-height: 100vh;
+    }
+    nav {
+      background: rgba(15,23,42,0.9); border-bottom: 1px solid var(--border);
+      padding: .9rem 1.5rem; display: flex; justify-content: space-between; align-items: center;
+    }
+    a.brand { font-size: 1.2rem; font-weight: 700; color: var(--text); text-decoration: none; }
+    a.hs-link {
+      color: var(--primary); text-decoration: none;
+      border: 1px solid var(--primary); padding: .3rem .8rem; border-radius: 8px; font-size: .9rem;
+    }
+    .box {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 2rem; max-width: 420px;
+      margin: 2.5rem auto; text-align: center;
+    }
+    h2 { font-size: 1.7rem; margin-bottom: .3rem; }
+    /* Punktestand */
+    .scores { display: flex; justify-content: space-around; margin: 1rem 0; }
+    .scores .num { font-size: 1.7rem; font-weight: 700; display: block; }
+    .scores .lbl { font-size: .75rem; color: var(--muted); }
+    /* Status */
+    #status { min-height: 1.6rem; font-weight: 600; margin: .5rem 0; }
+    /* Spielfeld */
+    .grid {
+      display: grid; grid-template-columns: repeat(3, 88px);
+      gap: 10px; justify-content: center; margin: 1rem 0;
+    }
+    .cell {
+      width: 88px; height: 88px;
+      background: rgba(15,23,42,0.9); border: 1px solid var(--border);
+      border-radius: 12px; font-size: 2rem; cursor: pointer;
+      color: var(--text); transition: background .15s;
+    }
+    .cell:hover:not(:disabled) { background: rgba(99,102,241,.2); }
+    .cell.x   { color: var(--primary); }
+    .cell.o   { color: var(--red); }
+    .cell.win { background: rgba(99,102,241,.25); box-shadow: 0 0 14px rgba(99,102,241,.5); }
+    /* Buttons */
+    .btn {
+      display: block; width: 100%; padding: .65rem; border: none;
+      border-radius: 10px; font-size: 1rem; font-weight: 600;
+      cursor: pointer; transition: filter .2s; color: white; margin-top: .6rem;
+    }
+    .btn:hover:not(:disabled) { filter: brightness(1.15); }
+    .btn:disabled { opacity: .4; cursor: default; }
+    .btn.ghost  { background: rgba(255,255,255,.06); border: 1px solid var(--border); }
+    .btn.primary { background: var(--primary); }
+    /* Speichern */
+    .save-box { margin-top: 1rem; }
+    .save-box p { color: var(--green); font-weight: 600; margin-bottom: .5rem; }
+    .save-row { display: flex; gap: .5rem; }
+    input {
+      flex: 1; padding: .6rem .8rem; background: #0f172a;
+      border: 1px solid var(--border); border-radius: 10px;
+      color: var(--text); font-size: .95rem; outline: none;
+    }
+    input:focus { border-color: var(--primary); }
+    .save-row .btn { width: auto; padding: .6rem 1rem; margin: 0; }
+  </style>
 </head>
 <body>
 
-<nav class="navbar navbar-dark px-4 py-3">
-  <a href="index.html" class="navbar-brand">🎮 Mini Games Hub</a>
-  <a href="highscores.html" class="btn btn-sm btn-glow" style="background:rgba(99,102,241,0.2);border:1px solid var(--primary);color:var(--primary)">🏆 Highscores</a>
+<nav>
+  <a href="index.html" class="brand">🎮 Mini Games Hub</a>
+  <a href="highscores.html" class="hs-link">🏆 Highscores</a>
 </nav>
 
-<div class="container text-center mt-5 pb-5">
-  <div class="glass-card p-4 mx-auto" style="max-width:420px">
-    
-    <h2 class="mb-1">❌⭕ Tic-Tac-Toe</h2>
-    <p id="status" style="color:var(--muted);min-height:1.5rem">Spieler <span style="color:var(--primary)">X</span> ist dran</p>
+<div class="box">
+  <h2>❌⭕ Tic-Tac-Toe</h2>
 
-    <div class="tic-grid mt-2 mb-3" id="board">
-      <button class="cell" data-i="0"></button>
-      <button class="cell" data-i="1"></button>
-      <button class="cell" data-i="2"></button>
-      <button class="cell" data-i="3"></button>
-      <button class="cell" data-i="4"></button>
-      <button class="cell" data-i="5"></button>
-      <button class="cell" data-i="6"></button>
-      <button class="cell" data-i="7"></button>
-      <button class="cell" data-i="8"></button>
+  <div class="scores">
+    <div>
+      <span class="num" id="score-x" style="color:var(--primary)">0</span>
+      <span class="lbl">SPIELER X</span>
     </div>
-
-    <div id="score-row" class="d-flex justify-content-around mb-3" style="font-family:'Rajdhani',sans-serif">
-      <div>
-        <div style="color:var(--primary);font-size:1.6rem;font-weight:700" id="score-x">0</div>
-        <div style="color:var(--muted);font-size:.8rem">SPIELER X</div>
-      </div>
-      <div>
-        <div style="color:var(--muted);font-size:1.6rem;font-weight:700" id="score-draw">0</div>
-        <div style="color:var(--muted);font-size:.8rem">UNENTSCHIEDEN</div>
-      </div>
-      <div>
-        <div style="color:var(--danger);font-size:1.6rem;font-weight:700" id="score-o">0</div>
-        <div style="color:var(--muted);font-size:.8rem">SPIELER O</div>
-      </div>
+    <div>
+      <span class="num" id="score-d" style="color:var(--muted)">0</span>
+      <span class="lbl">UNENTSCHIEDEN</span>
     </div>
-
-    <button class="btn btn-glow btn-warning w-100" id="restart">Neustart</button>
-
-    <!-- Save highscore -->
-    <div id="save-box" class="mt-3" style="display:none">
-      <p style="color:var(--secondary);font-weight:600">🏆 Glückwunsch! Runde gewonnen!</p>
-      <div class="d-flex gap-2">
-        <input type="text" id="hs-name" class="form-control guess-input" placeholder="Dein Name" style="font-size:1rem">
-        <button class="btn btn-glow btn-primary" id="save-btn">Speichern</button>
-      </div>
+    <div>
+      <span class="num" id="score-o" style="color:var(--red)">0</span>
+      <span class="lbl">SPIELER O</span>
     </div>
+  </div>
+
+  <p id="status"></p>
+
+  <div class="grid" id="board">
+    <button class="cell" data-i="0"></button>
+    <button class="cell" data-i="1"></button>
+    <button class="cell" data-i="2"></button>
+    <button class="cell" data-i="3"></button>
+    <button class="cell" data-i="4"></button>
+    <button class="cell" data-i="5"></button>
+    <button class="cell" data-i="6"></button>
+    <button class="cell" data-i="7"></button>
+    <button class="cell" data-i="8"></button>
+  </div>
+
+  <button class="btn ghost" onclick="neustart()">🔄 Neustart</button>
+
+  <div class="save-box" id="save-box" style="display:none">
+    <p>🏆 Score speichern!</p>
+    <div class="save-row">
+      <input type="text" id="name-input" placeholder="Dein Name">
+      <button class="btn primary" onclick="speichern()">Speichern</button>
+    </div>
+    <div id="save-msg"></div>
   </div>
 </div>
 
-<script src="tic.js">
-const WINS = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-let board, turn, gameOver, scores = {X:0,O:0,D:0}, rounds = 0;
+<script>
+  // Alle möglichen Gewinn-Kombinationen
+  var GEWINNLINIEN = [
+    [0,1,2], [3,4,5], [6,7,8],  // Zeilen
+    [0,3,6], [1,4,7], [2,5,8],  // Spalten
+    [0,4,8], [2,4,6]             // Diagonalen
+  ];
 
-function init() {
-  board = Array(9).fill('');
-  turn = 'X';
-  gameOver = false;
-  document.querySelectorAll('.cell').forEach(c => {
-    c.textContent = ''; c.className = 'cell'; c.disabled = false;
+  var feld = [];          // Das 9-Felder-Spielfeld
+  var aktSpieler = 'X';  // Wer ist gerade dran
+  var spielVorbei = false;
+  var punkte = { X: 0, O: 0, D: 0 };
+
+  function neustart() {
+    feld = ['','','','','','','','',''];
+    aktSpieler = 'X';
+    spielVorbei = false;
+
+    document.querySelectorAll('.cell').forEach(function(z) {
+      z.textContent = '';
+      z.className = 'cell';
+      z.disabled = false;
+    });
+
+    document.getElementById('status').textContent = 'Spieler X ist dran';
+    document.getElementById('save-box').style.display = 'none';
+    document.getElementById('save-msg').innerHTML = '';
+  }
+
+  function pruefeGewinner() {
+    for (var i = 0; i < GEWINNLINIEN.length; i++) {
+      var a = GEWINNLINIEN[i][0];
+      var b = GEWINNLINIEN[i][1];
+      var c = GEWINNLINIEN[i][2];
+      if (feld[a] !== '' && feld[a] === feld[b] && feld[a] === feld[c]) {
+        return GEWINNLINIEN[i]; // Gewinnlinie zurückgeben
+      }
+    }
+    return null;
+  }
+
+  document.getElementById('board').addEventListener('click', function(e) {
+    var zelle = e.target.closest('.cell');
+    if (!zelle || spielVorbei) return;
+
+    var i = parseInt(zelle.dataset.i);
+    if (feld[i] !== '') return; // Feld schon belegt
+
+    // Zug setzen
+    feld[i] = aktSpieler;
+    zelle.textContent = aktSpieler;
+    zelle.classList.add(aktSpieler.toLowerCase());
+    zelle.disabled = true;
+
+    // Gewinner prüfen
+    var gewinnlinie = pruefeGewinner();
+    if (gewinnlinie) {
+      spielVorbei = true;
+      gewinnlinie.forEach(function(idx) {
+        document.querySelector('[data-i="' + idx + '"]').classList.add('win');
+      });
+      document.getElementById('status').textContent = 'Spieler ' + aktSpieler + ' gewinnt! 🎉';
+      punkte[aktSpieler]++;
+      document.getElementById('score-' + aktSpieler.toLowerCase()).textContent = punkte[aktSpieler];
+      document.querySelectorAll('.cell').forEach(function(z) { z.disabled = true; });
+      document.getElementById('save-box').style.display = 'block';
+      return;
+    }
+
+    // Unentschieden? (alle Felder belegt)
+    var alleBelegt = feld.every(function(v) { return v !== ''; });
+    if (alleBelegt) {
+      spielVorbei = true;
+      document.getElementById('status').textContent = 'Unentschieden! 🤝';
+      punkte.D++;
+      document.getElementById('score-d').textContent = punkte.D;
+      return;
+    }
+
+    // Spieler wechseln
+    aktSpieler = aktSpieler === 'X' ? 'O' : 'X';
+    document.getElementById('status').textContent = 'Spieler ' + aktSpieler + ' ist dran';
   });
-  setStatus(`Spieler <span style="color:var(--${turn==='X'?'primary':'danger'})">${turn}</span> ist dran`);
-  document.getElementById('save-box').style.display = 'none';
-}
 
-function setStatus(html) { document.getElementById('status').innerHTML = html; }
+  function speichern() {
+    var name  = document.getElementById('name-input').value.trim() || 'Anonym';
+    var score = punkte.X + punkte.O;
 
-function checkWin() {
-  for (const [a,b,c] of WINS) {
-    if (board[a] && board[a]===board[b] && board[a]===board[c]) return [a,b,c];
+    var liste = JSON.parse(localStorage.getItem('highscores') || '[]');
+    liste.push({ spiel: 'Tic-Tac-Toe', name: name, punkte: score });
+    liste.sort(function(a, b) { return b.punkte - a.punkte; });
+    localStorage.setItem('highscores', JSON.stringify(liste));
+
+    document.getElementById('save-msg').innerHTML =
+      '<p style="color:var(--green);margin-top:.5rem">✅ Gespeichert! ' +
+      '<a href="highscores.html" style="color:var(--primary)">Highscores ansehen →</a></p>';
   }
-  return null;
-}
 
-document.getElementById('board').addEventListener('click', e => {
-  const cell = e.target.closest('.cell');
-  if (!cell || gameOver) return;
-  const i = +cell.dataset.i;
-  if (board[i]) return;
-
-  board[i] = turn;
-  cell.textContent = turn;
-  cell.classList.add(turn.toLowerCase());
-
-  const win = checkWin();
-  if (win) {
-    gameOver = true;
-    win.forEach(idx => document.querySelector(`[data-i="${idx}"]`).classList.add('win'));
-    const color = turn==='X' ? 'var(--primary)' : 'var(--danger)';
-    setStatus(`<span style="color:${color}">Spieler ${turn} gewinnt! 🎉</span>`);
-    scores[turn]++;
-    rounds++;
-    document.getElementById(`score-${turn.toLowerCase()}`).textContent = scores[turn];
-    if (rounds % 3 === 0) document.getElementById('save-box').style.display = 'block';
-    document.querySelectorAll('.cell').forEach(c => c.disabled = true);
-    return;
-  }
-  if (board.every(v => v)) {
-    gameOver = true;
-    setStatus('<span style="color:var(--muted)">Unentschieden 🤝</span>');
-    scores.D++;
-    document.getElementById('score-draw').textContent = scores.D;
-    return;
-  }
-  turn = turn==='X' ? 'O' : 'X';
-  setStatus(`Spieler <span style="color:var(--${turn==='X'?'primary':'danger'})">${turn}</span> ist dran`);
-});
-
-document.getElementById('restart').addEventListener('click', init);
-
-document.getElementById('save-btn').addEventListener('click', () => {
-  const name = document.getElementById('hs-name').value.trim() || 'Anonym';
-  const hs = JSON.parse(localStorage.getItem('highscores') || '[]');
-  hs.push({ game: 'Tic-Tac-Toe', name, score: rounds, ts: Date.now() });
-  hs.sort((a,b) => b.score - a.score);
-  localStorage.setItem('highscores', JSON.stringify(hs.slice(0,50)));
-  document.getElementById('save-box').innerHTML = `<p style="color:var(--secondary)">✅ Gespeichert! <a href="highscores.html" style="color:var(--primary)">Highscores ansehen →</a></p>`;
-});
-
-init();
+  neustart();
 </script>
 </body>
 </html>
