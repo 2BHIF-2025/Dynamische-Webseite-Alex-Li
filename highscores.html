@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Highscores</title>
+  <style>
+    :root {
+      --primary: #6366f1; --green: #22c55e; --yellow: #f59e0b; --red: #ef4444;
+      --text: #e2e8f0; --muted: #94a3b8;
+      --card: rgba(30,41,59,0.85); --border: rgba(255,255,255,0.08);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: linear-gradient(135deg, #0f172a, #020617);
+      color: var(--text); font-family: 'Segoe UI', sans-serif; min-height: 100vh;
+    }
+    nav {
+      background: rgba(15,23,42,0.9); border-bottom: 1px solid var(--border);
+      padding: .9rem 1.5rem; display: flex; justify-content: space-between; align-items: center;
+    }
+    a.brand { font-size: 1.2rem; font-weight: 700; color: var(--text); text-decoration: none; }
+    .box {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 2rem; max-width: 660px;
+      margin: 2.5rem auto;
+    }
+    .top-row {
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: .6rem; margin-bottom: 1.4rem;
+    }
+    h2 { font-size: 1.7rem; }
+    .controls { display: flex; gap: .5rem; }
+    select {
+      background: #0f172a; color: var(--text); border: 1px solid var(--border);
+      border-radius: 8px; padding: .3rem .7rem; font-size: .9rem; cursor: pointer; outline: none;
+    }
+    .btn-delete {
+      background: rgba(239,68,68,.15); border: 1px solid var(--red);
+      color: var(--red); border-radius: 8px; padding: .3rem .7rem;
+      font-size: .9rem; cursor: pointer;
+    }
+    .btn-delete:hover { background: rgba(239,68,68,.25); }
+    /* Tabelle */
+    table { width: 100%; border-collapse: collapse; }
+    th { color: var(--muted); font-size: .78rem; text-transform: uppercase; letter-spacing: .07em; padding: 0 .5rem .75rem; border-bottom: 1px solid var(--border); font-weight: 600; }
+    td { padding: .65rem .5rem; border-bottom: 1px solid var(--border); }
+    tr:last-child td { border-bottom: none; }
+    /* Spiel-Badges */
+    .badge {
+      display: inline-block; padding: .15rem .55rem;
+      border-radius: 6px; font-size: .78rem; font-weight: 600;
+    }
+    .b-tic   { background: rgba(99,102,241,.2); color: var(--primary); }
+    .b-mem   { background: rgba(34,197,94,.2);  color: var(--green); }
+    .b-guess { background: rgba(245,158,11,.2); color: var(--yellow); }
+    .b-quiz  { background: rgba(239,68,68,.2);  color: var(--red); }
+    /* Leer-Zustand */
+    .leer { text-align: center; padding: 3rem 0; color: var(--muted); }
+    .leer .icon { font-size: 3rem; margin-bottom: .5rem; }
+    .btn-start {
+      display: inline-block; margin-top: 1rem; padding: .5rem 1.4rem;
+      background: var(--primary); color: white; text-decoration: none;
+      border-radius: 10px; font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="brand">🎮 Mini Games Hub</a>
+</nav>
+
+<div class="box">
+  <div class="top-row">
+    <h2>🏆 Highscores</h2>
+    <div class="controls">
+      <select id="filter" onchange="anzeigen()">
+        <option value="alle">Alle Spiele</option>
+        <option value="Tic-Tac-Toe">Tic-Tac-Toe</option>
+        <option value="Memory">Memory</option>
+        <option value="Zahlenraten">Zahlenraten</option>
+        <option value="Quiz">Quiz</option>
+      </select>
+      <button class="btn-delete" onclick="allesLoeschen()">🗑 Löschen</button>
+    </div>
+  </div>
+
+  <div id="inhalt"></div>
+</div>
+
+<script>
+  // Zuordnung: Spielname → Badge-CSS-Klasse und Icon
+  var BADGE = {
+    'Tic-Tac-Toe': { klasse: 'b-tic',   icon: '❌⭕' },
+    'Memory':       { klasse: 'b-mem',   icon: '🧠' },
+    'Zahlenraten':  { klasse: 'b-guess', icon: '🔢' },
+    'Quiz':         { klasse: 'b-quiz',  icon: '❓' }
+  };
+  var MEDAILLEN = ['🥇','🥈','🥉'];
+
+  function anzeigen() {
+    var filter = document.getElementById('filter').value;
+    var alle   = JSON.parse(localStorage.getItem('highscores') || '[]');
+
+    // Nach Spiel filtern
+    var liste = filter === 'alle'
+      ? alle
+      : alle.filter(function(e) { return e.spiel === filter; });
+
+    var inhalt = document.getElementById('inhalt');
+
+    if (liste.length === 0) {
+      inhalt.innerHTML =
+        '<div class="leer">' +
+          '<div class="icon">📭</div>' +
+          '<p>Noch keine Highscores vorhanden.<br>Spiele ein Spiel und speichere deinen Score!</p>' +
+          '<a href="index.html" class="btn-start">Zur Spielauswahl</a>' +
+        '</div>';
+      return;
+    }
+
+    var html = '<table><thead><tr>' +
+      '<th>#</th><th>Spiel</th><th>Name</th><th style="text-align:right">Punkte</th>' +
+      '</tr></thead><tbody>';
+
+    liste.forEach(function(eintrag, i) {
+      var b           = BADGE[eintrag.spiel] || { klasse: 'b-tic', icon: '🎮' };
+      var platz       = i < 3 ? MEDAILLEN[i] : '#' + (i + 1);
+      var punktefarbe = i === 0 ? 'var(--yellow)' : i < 3 ? 'var(--text)' : 'var(--muted)';
+
+      html +=
+        '<tr>' +
+          '<td style="color:var(--muted);width:40px">' + platz + '</td>' +
+          '<td><span class="badge ' + b.klasse + '">' + b.icon + ' ' + eintrag.spiel + '</span></td>' +
+          '<td style="font-weight:600">' + eintrag.name + '</td>' +
+          '<td style="text-align:right;color:' + punktefarbe + ';font-size:1.1rem;font-weight:700">' + eintrag.punkte + '</td>' +
+        '</tr>';
+    });
+
+    html += '</tbody></table>';
+    inhalt.innerHTML = html;
+  }
+
+  function allesLoeschen() {
+    if (confirm('Alle Highscores wirklich löschen?')) {
+      localStorage.removeItem('highscores');
+      anzeigen();
+    }
+  }
+
+  anzeigen();
+</script>
+</body>
+</html>
