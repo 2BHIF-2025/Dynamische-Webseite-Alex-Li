@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zahlenraten</title>
+  <style>
+    :root {
+      --primary: #6366f1; --green: #22c55e; --yellow: #f59e0b; --red: #ef4444;
+      --text: #e2e8f0; --muted: #94a3b8;
+      --card: rgba(30,41,59,0.85); --border: rgba(255,255,255,0.08);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: linear-gradient(135deg, #0f172a, #020617);
+      color: var(--text); font-family: 'Segoe UI', sans-serif; min-height: 100vh;
+    }
+    nav {
+      background: rgba(15,23,42,0.9); border-bottom: 1px solid var(--border);
+      padding: .9rem 1.5rem; display: flex; justify-content: space-between; align-items: center;
+    }
+    a.brand { font-size: 1.2rem; font-weight: 700; color: var(--text); text-decoration: none; }
+    a.hs-link {
+      color: var(--primary); text-decoration: none;
+      border: 1px solid var(--primary); padding: .3rem .8rem; border-radius: 8px; font-size: .9rem;
+    }
+    .box {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 2rem; max-width: 420px;
+      margin: 2.5rem auto; text-align: center;
+    }
+    h2 { font-size: 1.7rem; margin-bottom: .3rem; }
+    p.info { color: var(--muted); margin-bottom: 1rem; }
+    /* Bereich-Anzeige */
+    .range-labels { display: flex; justify-content: space-between; font-size: .85rem; color: var(--muted); }
+    #hinweis { color: var(--yellow); font-weight: 600; }
+    .balken-bg { height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; margin: .4rem 0 1rem; }
+    #balken { height: 100%; width: 50%; border-radius: 3px; background: var(--yellow); transition: width .4s, background .4s; }
+    /* Input */
+    input[type=number] {
+      width: 100%; padding: .65rem; background: #0f172a;
+      border: 1px solid var(--border); border-radius: 10px;
+      color: var(--text); font-size: 1.2rem; text-align: center; outline: none;
+      /* -moz-*/appearance: textfield;
+    }
+    input[type=number]:focus { border-color: var(--yellow); }
+    input[type=number]::-webkit-inner-spin-button { display: none; }
+    /* Buttons */
+    .btn {
+      display: block; width: 100%; padding: .65rem; border: none;
+      border-radius: 10px; font-size: 1rem; font-weight: 600;
+      cursor: pointer; transition: filter .2s; color: white; margin-top: .6rem;
+    }
+    .btn:hover:not(:disabled) { filter: brightness(1.15); }
+    .btn:disabled { opacity: .4; cursor: default; }
+    .btn.yellow { background: var(--yellow); color: #0f172a; }
+    .btn.ghost  { background: rgba(255,255,255,.06); border: 1px solid var(--border); }
+    .btn.primary { background: var(--primary); }
+    /* Status */
+    #feedback { min-height: 1.6rem; font-weight: 600; margin: .5rem 0; }
+    /* Verlauf */
+    #verlauf { max-height: 110px; overflow-y: auto; font-size: .85rem; color: var(--muted); margin: .5rem 0; }
+    /* Speichern */
+    .save-box { margin-top: 1rem; }
+    .save-box > p { color: var(--green); font-weight: 600; margin-bottom: .5rem; }
+    .save-row { display: flex; gap: .5rem; }
+    input[type=text] {
+      flex: 1; padding: .6rem .8rem; background: #0f172a;
+      border: 1px solid var(--border); border-radius: 10px;
+      color: var(--text); font-size: .95rem; outline: none;
+    }
+    input[type=text]:focus { border-color: var(--primary); }
+    .save-row .btn { width: auto; padding: .6rem 1rem; margin: 0; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="brand">🎮 Mini Games Hub</a>
+  <a href="highscores.html" class="hs-link">🏆 Highscores</a>
+</nav>
+
+<div class="box">
+  <h2>🔢 Zahlenraten</h2>
+  <p class="info">Eine Zahl zwischen <strong>1</strong> und <strong>100</strong></p>
+
+  <div class="range-labels">
+    <span id="grenze-tief">1</span>
+    <span id="hinweis">?</span>
+    <span id="grenze-hoch">100</span>
+  </div>
+  <div class="balken-bg"><div id="balken"></div></div>
+
+  <input type="number" id="eingabe" min="1" max="100" placeholder="Deine Zahl…">
+
+  <button class="btn yellow" onclick="raten()">Raten</button>
+
+  <p id="feedback"></p>
+  <p style="color:var(--muted);font-size:.9rem">Versuche: <strong id="versuche">0</strong></p>
+
+  <div id="verlauf"></div>
+
+  <div class="save-box" id="save-box" style="display:none">
+    <p>🎉 Richtig! Score: <span id="final-score"></span> Punkte</p>
+    <div class="save-row">
+      <input type="text" id="name-input" placeholder="Dein Name">
+      <button class="btn yellow" onclick="speichern()">Speichern</button>
+    </div>
+    <div id="save-msg"></div>
+  </div>
+
+  <button class="btn ghost" onclick="neueRunde()" style="margin-top:.75rem">🔄 Neue Runde</button>
+</div>
+
+<script>
+  var geheimzahl;
+  var versuche;
+  var untergrenze;
+  var obergrenze;
+  var fertig;
+
+  function neueRunde() {
+    geheimzahl  = Math.floor(Math.random() * 100) + 1;
+    versuche    = 0;
+    untergrenze = 1;
+    obergrenze  = 100;
+    fertig      = false;
+
+    document.getElementById('versuche').textContent    = 0;
+    document.getElementById('feedback').textContent    = '';
+    document.getElementById('verlauf').innerHTML       = '';
+    document.getElementById('eingabe').value           = '';
+    document.getElementById('eingabe').disabled        = false;
+    document.getElementById('save-box').style.display  = 'none';
+    document.getElementById('save-msg').innerHTML      = '';
+    document.getElementById('grenze-tief').textContent = 1;
+    document.getElementById('grenze-hoch').textContent = 100;
+    document.getElementById('hinweis').textContent     = '?';
+    document.getElementById('hinweis').style.color     = 'var(--yellow)';
+    document.getElementById('balken').style.width      = '50%';
+    document.getElementById('balken').style.background = 'var(--yellow)';
+    document.getElementById('eingabe').focus();
+  }
+
+  function raten() {
+    if (fertig) return;
+
+    var wert = parseInt(document.getElementById('eingabe').value);
+    if (!wert || wert < 1 || wert > 100) {
+      document.getElementById('feedback').textContent = '⚠️ Bitte eine Zahl zwischen 1 und 100!';
+      document.getElementById('feedback').style.color = 'var(--red)';
+      return;
+    }
+
+    versuche++;
+    document.getElementById('versuche').textContent = versuche;
+
+    // Balken zeigt Schätzung als Position an
+    var prozent = ((wert - 1) / 99) * 100;
+    document.getElementById('balken').style.width = prozent + '%';
+
+    var verlauf = document.getElementById('verlauf');
+    var eintrag = document.createElement('div');
+
+    if (wert === geheimzahl) {
+      eintrag.innerHTML = '<span style="color:var(--green)">✅ ' + wert + ' – Richtig!</span>';
+      verlauf.prepend(eintrag);
+
+      var score = Math.max(10, 200 - versuche * 15);
+      document.getElementById('feedback').textContent    = '🎉 Gefunden in ' + versuche + ' Versuchen!';
+      document.getElementById('feedback').style.color   = 'var(--green)';
+      document.getElementById('final-score').textContent = score;
+      document.getElementById('save-box').style.display  = 'block';
+      document.getElementById('balken').style.background = 'var(--green)';
+      document.getElementById('eingabe').disabled        = true;
+      fertig = true;
+
+    } else if (wert < geheimzahl) {
+      untergrenze = Math.max(untergrenze, wert + 1);
+      document.getElementById('grenze-tief').textContent = untergrenze;
+      document.getElementById('hinweis').textContent     = '⬆️ Zu niedrig';
+      document.getElementById('hinweis').style.color     = 'var(--primary)';
+      document.getElementById('feedback').textContent    = '⬆️ Zu niedrig!';
+      document.getElementById('feedback').style.color   = 'var(--primary)';
+      document.getElementById('balken').style.background = 'var(--primary)';
+      eintrag.innerHTML = '<span>' + wert + ' → zu niedrig ⬆️</span>';
+      verlauf.prepend(eintrag);
+
+    } else {
+      obergrenze = Math.min(obergrenze, wert - 1);
+      document.getElementById('grenze-hoch').textContent = obergrenze;
+      document.getElementById('hinweis').textContent     = '⬇️ Zu hoch';
+      document.getElementById('hinweis').style.color     = 'var(--red)';
+      document.getElementById('feedback').textContent    = '⬇️ Zu hoch!';
+      document.getElementById('feedback').style.color   = 'var(--red)';
+      document.getElementById('balken').style.background = 'var(--red)';
+      eintrag.innerHTML = '<span>' + wert + ' → zu hoch ⬇️</span>';
+      verlauf.prepend(eintrag);
+    }
+
+    document.getElementById('eingabe').value = '';
+    document.getElementById('eingabe').focus();
+  }
+
+  // Enter-Taste zum Raten
+  document.getElementById('eingabe').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') raten();
+  });
+
+  function speichern() {
+    var name  = document.getElementById('name-input').value.trim() || 'Anonym';
+    var score = Math.max(10, 200 - versuche * 15);
+
+    var liste = JSON.parse(localStorage.getItem('highscores') || '[]');
+    liste.push({ spiel: 'Zahlenraten', name: name, punkte: score });
+    liste.sort(function(a, b) { return b.punkte - a.punkte; });
+    localStorage.setItem('highscores', JSON.stringify(liste));
+
+    document.getElementById('save-msg').innerHTML =
+      '<p style="color:var(--green);margin-top:.5rem">✅ Gespeichert! ' +
+      '<a href="highscores.html" style="color:var(--primary)">Highscores ansehen →</a></p>';
+  }
+
+  neueRunde();
+</script>
+</body>
+</html>
