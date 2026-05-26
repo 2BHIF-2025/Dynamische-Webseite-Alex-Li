@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz</title>
+  <style>
+    :root {
+      --primary: #6366f1; --green: #22c55e; --yellow: #f59e0b; --red: #ef4444;
+      --text: #e2e8f0; --muted: #94a3b8;
+      --card: rgba(30,41,59,0.85); --border: rgba(255,255,255,0.08);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: linear-gradient(135deg, #0f172a, #020617);
+      color: var(--text); font-family: 'Segoe UI', sans-serif; min-height: 100vh;
+    }
+    nav {
+      background: rgba(15,23,42,0.9); border-bottom: 1px solid var(--border);
+      padding: .9rem 1.5rem; display: flex; justify-content: space-between; align-items: center;
+    }
+    a.brand { font-size: 1.2rem; font-weight: 700; color: var(--text); text-decoration: none; }
+    a.hs-link {
+      color: var(--primary); text-decoration: none;
+      border: 1px solid var(--primary); padding: .3rem .8rem; border-radius: 8px; font-size: .9rem;
+    }
+    .box {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 2rem; max-width: 580px;
+      margin: 2.5rem auto;
+    }
+    h2 { font-size: 1.7rem; text-align: center; margin-bottom: .3rem; }
+    p.info { color: var(--muted); text-align: center; margin-bottom: 1rem; }
+    /* Fortschrittsbalken */
+    .progress-bg { height: 5px; border-radius: 3px; background: var(--border); overflow: hidden; margin-bottom: 1.2rem; }
+    #fortschritt { height: 100%; width: 0%; background: var(--red); border-radius: 3px; transition: width .4s; }
+    /* Frage */
+    #frage-text { text-align: center; font-size: 1.05rem; min-height: 3.5rem; line-height: 1.5; margin-bottom: 1.2rem; }
+    /* Antwort-Buttons */
+    .antwort-btn {
+      display: block; width: 100%; padding: .7rem 1.1rem;
+      background: rgba(15,23,42,.8); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text); text-align: left;
+      cursor: pointer; transition: border-color .15s, background .15s, transform .1s;
+      font-size: .95rem; margin-bottom: .55rem; font-family: inherit;
+    }
+    .antwort-btn:hover:not(:disabled) {
+      border-color: var(--red); background: rgba(239,68,68,.1); transform: translateX(3px);
+    }
+    .antwort-btn.richtig { border-color: var(--green); background: rgba(34,197,94,.12); }
+    .antwort-btn.falsch  { border-color: var(--red);   background: rgba(239,68,68,.12); }
+    /* Feedback */
+    #feedback-text { text-align: center; min-height: 1.4rem; font-size: .9rem; margin-top: .3rem; }
+    /* Allgemeine Buttons */
+    .btn {
+      display: block; width: 100%; padding: .65rem; border: none;
+      border-radius: 10px; font-size: 1rem; font-weight: 600;
+      cursor: pointer; transition: filter .2s; color: white; margin-top: .6rem;
+    }
+    .btn:hover { filter: brightness(1.15); }
+    .btn.red    { background: var(--red); }
+    .btn.primary { background: var(--primary); }
+    .btn.ghost  { background: rgba(255,255,255,.06); border: 1px solid var(--border); }
+    /* Ergebnis */
+    #ergebnis-screen { text-align: center; }
+    #ergebnis-emoji  { font-size: 3rem; margin-bottom: .5rem; }
+    #end-punkte { font-size: 2.6rem; font-weight: 700; color: var(--yellow); margin: .3rem 0; }
+    /* Speichern */
+    .save-box { margin-top: 1rem; }
+    .save-box > p { color: var(--green); font-weight: 600; margin-bottom: .5rem; text-align: center; }
+    .save-row { display: flex; gap: .5rem; }
+    input {
+      flex: 1; padding: .6rem .8rem; background: #0f172a;
+      border: 1px solid var(--border); border-radius: 10px;
+      color: var(--text); font-size: .95rem; outline: none;
+    }
+    input:focus { border-color: var(--primary); }
+    .save-row .btn { width: auto; padding: .6rem 1rem; margin: 0; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="brand">🎮 Mini Games Hub</a>
+  <a href="highscores.html" class="hs-link">🏆 Highscores</a>
+</nav>
+
+<div class="box">
+
+  <!-- ① Startbildschirm -->
+  <div id="start-screen">
+    <h2>❓ Quiz</h2>
+    <p class="info">10 zufällige Fragen – Allgemeinwissen</p>
+    <p style="text-align:center;margin-bottom:1.2rem">
+      Richtige Antwort = <strong style="color:var(--yellow)">10 Punkte</strong><br>
+      Schnelle Antwort = Bonuspunkte!
+    </p>
+    <button class="btn red" onclick="quizStarten()">Quiz starten ▶</button>
+  </div>
+
+  <!-- ② Spielbildschirm -->
+  <div id="spiel-screen" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem">
+      <span style="color:var(--muted);font-size:.85rem">Frage <span id="frage-nr">1</span> / 10</span>
+      <span style="color:var(--yellow);font-weight:600">⭐ <span id="punkte-live">0</span></span>
+    </div>
+    <div class="progress-bg"><div id="fortschritt"></div></div>
+    <p id="frage-text"></p>
+    <div id="antwort-container"></div>
+    <p id="feedback-text"></p>
+  </div>
+
+  <!-- ③ Ergebnisbildschirm -->
+  <div id="ergebnis-screen" style="display:none">
+    <div id="ergebnis-emoji"></div>
+    <h2>Quiz beendet!</h2>
+    <p style="color:var(--muted);margin:.3rem 0">Dein Ergebnis:</p>
+    <div id="end-punkte"></div>
+    <p id="end-detail" style="color:var(--muted);font-size:.9rem;margin-bottom:1rem"></p>
+
+    <div class="save-box">
+      <p>🏆 Score speichern!</p>
+      <div class="save-row">
+        <input type="text" id="name-input" placeholder="Dein Name">
+        <button class="btn primary" onclick="speichern()">Speichern</button>
+      </div>
+      <div id="save-msg"></div>
+    </div>
+
+    <button class="btn ghost" onclick="zurueck()" style="margin-top:.75rem">← Zum Start</button>
+  </div>
+
+</div>
+
+<script>
+  var ALLE_FRAGEN = [
+    { frage: "Welches Element hat das chemische Symbol Au?",            antworten: ["Silber","Gold","Aluminium","Kupfer"],          richtig: 1 },
+    { frage: "Wie viele Seiten hat ein Oktaeder?",                      antworten: ["6","8","10","12"],                             richtig: 1 },
+    { frage: "In welchem Jahr begann der Erste Weltkrieg?",             antworten: ["1912","1914","1916","1918"],                   richtig: 1 },
+    { frage: "Was ist die Hauptstadt von Australien?",                  antworten: ["Sydney","Melbourne","Brisbane","Canberra"],    richtig: 3 },
+    { frage: "Wie viele Planeten hat unser Sonnensystem?",              antworten: ["7","8","9","10"],                              richtig: 1 },
+    { frage: "Wer schrieb 'Romeo und Julia'?",                          antworten: ["Goethe","Schiller","Shakespeare","Dickens"],   richtig: 2 },
+    { frage: "Was ist die kleinste Primzahl?",                          antworten: ["0","1","2","3"],                              richtig: 2 },
+    { frage: "Welches Tier ist das schnellste auf dem Land?",           antworten: ["Gepard","Löwe","Antilope","Pferd"],            richtig: 0 },
+    { frage: "Wie viele Knochen hat ein erwachsener Mensch?",           antworten: ["186","206","226","246"],                       richtig: 1 },
+    { frage: "In welchem Land liegt der Kilimandscharo?",               antworten: ["Kenia","Äthiopien","Tansania","Uganda"],       richtig: 2 },
+    { frage: "Was ist H₂O?",                                           antworten: ["Wasserstoffperoxid","Wasser","Salzsäure","Ozon"], richtig: 1 },
+    { frage: "Wann wurde die Berliner Mauer gebaut?",                   antworten: ["1959","1961","1963","1965"],                   richtig: 1 },
+    { frage: "Wie viele Farben hat ein Regenbogen?",                    antworten: ["5","6","7","8"],                              richtig: 2 },
+    { frage: "Welches ist das größte Organ des menschlichen Körpers?", antworten: ["Leber","Lunge","Haut","Gehirn"],               richtig: 2 },
+    { frage: "In welchem Jahr landete der erste Mensch auf dem Mond?", antworten: ["1965","1967","1969","1971"],                   richtig: 2 },
+  ];
+
+  var fragen = [];       // 10 zufällig gewählte Fragen
+  var aktuelleIndex = 0;
+  var punkte = 0;
+  var startzeit;
+
+  function mischen(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+  }
+
+  function quizStarten() {
+    fragen        = mischen(ALLE_FRAGEN).slice(0, 10);
+    aktuelleIndex = 0;
+    punkte        = 0;
+
+    document.getElementById('start-screen').style.display    = 'none';
+    document.getElementById('ergebnis-screen').style.display = 'none';
+    document.getElementById('spiel-screen').style.display    = 'block';
+    zeigeFrage();
+  }
+
+  function zeigeFrage() {
+    var f = fragen[aktuelleIndex];
+    document.getElementById('frage-nr').textContent      = aktuelleIndex + 1;
+    document.getElementById('punkte-live').textContent   = punkte;
+    document.getElementById('fortschritt').style.width   = (aktuelleIndex / 10 * 100) + '%';
+    document.getElementById('frage-text').textContent    = f.frage;
+    document.getElementById('feedback-text').textContent = '';
+    startzeit = Date.now();
+
+    var container = document.getElementById('antwort-container');
+    container.innerHTML = '';
+
+    var buchstaben = ['A','B','C','D'];
+    f.antworten.forEach(function(text, i) {
+      var btn = document.createElement('button');
+      btn.className   = 'antwort-btn';
+      btn.textContent = buchstaben[i] + '. ' + text;
+      btn.addEventListener('click', function() { antwortWaehlen(i, btn); });
+      container.appendChild(btn);
+    });
+  }
+
+  function antwortWaehlen(gewaehlt, geklickterBtn) {
+    var f         = fragen[aktuelleIndex];
+    var vergangen = (Date.now() - startzeit) / 1000;
+    var bonus     = Math.max(0, Math.round(5 - vergangen));
+
+    // Alle Buttons sperren
+    document.querySelectorAll('.antwort-btn').forEach(function(b) { b.disabled = true; });
+
+    if (gewaehlt === f.richtig) {
+      geklickterBtn.classList.add('richtig');
+      var gewonnen = 10 + bonus;
+      punkte += gewonnen;
+      document.getElementById('punkte-live').textContent = punkte;
+      document.getElementById('feedback-text').innerHTML =
+        '<span style="color:var(--green)">✅ Richtig! +' + gewonnen + ' Punkte' +
+        (bonus > 0 ? ' (inkl. ' + bonus + ' Zeitbonus)' : '') + '</span>';
+    } else {
+      geklickterBtn.classList.add('falsch');
+      document.querySelectorAll('.antwort-btn')[f.richtig].classList.add('richtig');
+      document.getElementById('feedback-text').innerHTML =
+        '<span style="color:var(--red)">❌ Falsch! Richtig: ' + f.antworten[f.richtig] + '</span>';
+    }
+
+    // 1,4 Sekunden warten, dann nächste Frage
+    setTimeout(function() {
+      aktuelleIndex++;
+      if (aktuelleIndex < 10) {
+        zeigeFrage();
+      } else {
+        zeigeErgebnis();
+      }
+    }, 1400);
+  }
+
+  function zeigeErgebnis() {
+    document.getElementById('spiel-screen').style.display    = 'none';
+    document.getElementById('ergebnis-screen').style.display = 'block';
+    document.getElementById('end-punkte').textContent  = punkte + ' Punkte';
+    document.getElementById('end-detail').textContent  = 'ca. ' + Math.round(punkte / 10) + ' von 10 Fragen richtig';
+    document.getElementById('ergebnis-emoji').textContent =
+      punkte >= 80 ? '🏆' : punkte >= 50 ? '🎉' : punkte >= 30 ? '👍' : '😅';
+    document.getElementById('save-msg').innerHTML = '';
+  }
+
+  function zurueck() {
+    document.getElementById('ergebnis-screen').style.display = 'none';
+    document.getElementById('start-screen').style.display    = 'block';
+  }
+
+  function speichern() {
+    var name = document.getElementById('name-input').value.trim() || 'Anonym';
+
+    var liste = JSON.parse(localStorage.getItem('highscores') || '[]');
+    liste.push({ spiel: 'Quiz', name: name, punkte: punkte });
+    liste.sort(function(a, b) { return b.punkte - a.punkte; });
+    localStorage.setItem('highscores', JSON.stringify(liste));
+
+    document.getElementById('save-msg').innerHTML =
+      '<p style="color:var(--green);margin-top:.5rem">✅ Gespeichert! ' +
+      '<a href="highscores.html" style="color:var(--primary)">Highscores ansehen →</a></p>';
+  }
+</script>
+</body>
+</html>
