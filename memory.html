@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Memory</title>
+  <style>
+    :root {
+      --primary: #6366f1; --green: #22c55e; --yellow: #f59e0b;
+      --text: #e2e8f0; --muted: #94a3b8;
+      --card: rgba(30,41,59,0.85); --border: rgba(255,255,255,0.08);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: linear-gradient(135deg, #0f172a, #020617);
+      color: var(--text); font-family: 'Segoe UI', sans-serif; min-height: 100vh;
+    }
+    nav {
+      background: rgba(15,23,42,0.9); border-bottom: 1px solid var(--border);
+      padding: .9rem 1.5rem; display: flex; justify-content: space-between; align-items: center;
+    }
+    a.brand { font-size: 1.2rem; font-weight: 700; color: var(--text); text-decoration: none; }
+    a.hs-link {
+      color: var(--primary); text-decoration: none;
+      border: 1px solid var(--primary); padding: .3rem .8rem; border-radius: 8px; font-size: .9rem;
+    }
+    .box {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 2rem; max-width: 480px;
+      margin: 2.5rem auto; text-align: center;
+    }
+    h2 { font-size: 1.7rem; margin-bottom: .3rem; }
+    p.info { color: var(--muted); margin-bottom: .5rem; }
+    /* Karten-Grid */
+    .mem-grid {
+      display: grid; grid-template-columns: repeat(4, 75px);
+      gap: 10px; justify-content: center; margin: 1.2rem 0;
+    }
+    /* Karte: Flip-Effekt */
+    .karte {
+      width: 75px; height: 75px;
+      cursor: pointer; perspective: 600px;
+    }
+    .karte-inner {
+      width: 100%; height: 100%; position: relative;
+      transform-style: preserve-3d; transition: transform .4s;
+      border-radius: 10px;
+    }
+    .karte.offen .karte-inner,
+    .karte.gefunden .karte-inner { transform: rotateY(180deg); }
+    .vorne, .hinten {
+      position: absolute; inset: 0; border-radius: 10px;
+      backface-visibility: hidden; display: flex;
+      align-items: center; justify-content: center;
+      font-size: 1.9rem; border: 1px solid var(--border);
+    }
+    .vorne   { background: #1e293b; }
+    .hinten  { background: rgba(30,41,59,.9); transform: rotateY(180deg); }
+    .karte.gefunden .hinten {
+      border-color: var(--green); box-shadow: 0 0 10px rgba(34,197,94,.4);
+    }
+    /* Buttons */
+    .btn {
+      display: block; width: 100%; padding: .65rem; border: none;
+      border-radius: 10px; font-size: 1rem; font-weight: 600;
+      cursor: pointer; transition: filter .2s; color: white; margin-top: .6rem;
+    }
+    .btn:hover { filter: brightness(1.15); }
+    .btn.green   { background: var(--green); }
+    .btn.primary { background: var(--primary); }
+    .btn.ghost   { background: rgba(255,255,255,.06); border: 1px solid var(--border); }
+    /* Speichern */
+    .save-box { margin-top: 1rem; }
+    .save-box > p { color: var(--green); font-weight: 600; margin-bottom: .5rem; }
+    .save-row { display: flex; gap: .5rem; }
+    input {
+      flex: 1; padding: .6rem .8rem; background: #0f172a;
+      border: 1px solid var(--border); border-radius: 10px;
+      color: var(--text); font-size: .95rem; outline: none;
+    }
+    input:focus { border-color: var(--primary); }
+    .save-row .btn { width: auto; padding: .6rem 1rem; margin: 0; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="brand">🎮 Mini Games Hub</a>
+  <a href="highscores.html" class="hs-link">🏆 Highscores</a>
+</nav>
+
+<div class="box">
+  <h2>🧠 Memory</h2>
+  <p class="info">Züge: <strong id="zuege">0</strong> &nbsp;|&nbsp; Paare: <strong id="paare">0</strong> / 8</p>
+
+  <div class="mem-grid" id="grid"></div>
+
+  <button class="btn green" onclick="neuesSpiel()">🔄 Neues Spiel</button>
+
+  <div class="save-box" id="save-box" style="display:none">
+    <p>🏆 Alle Paare gefunden!</p>
+    <div class="save-row">
+      <input type="text" id="name-input" placeholder="Dein Name">
+      <button class="btn green" onclick="speichern()">Speichern</button>
+    </div>
+    <div id="save-msg"></div>
+  </div>
+</div>
+
+<script>
+  var EMOJIS = ['🚀','🦊','🌸','⚡','🎸','🌊','🔮','🦋'];
+
+  var aufgedeckt = [];  // Aktuell aufgedeckte Karten (max. 2)
+  var zuege = 0;
+  var gefunden = 0;
+  var blockiert = false; // Kein Klick während Animation
+
+  function mischen(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+  }
+
+  function neuesSpiel() {
+    // Jedes Emoji doppelt → 16 Karten
+    var deck = mischen(EMOJIS.concat(EMOJIS));
+    zuege = 0; gefunden = 0; aufgedeckt = []; blockiert = false;
+
+    document.getElementById('zuege').textContent = 0;
+    document.getElementById('paare').textContent = 0;
+    document.getElementById('save-box').style.display = 'none';
+    document.getElementById('save-msg').innerHTML = '';
+
+    var grid = document.getElementById('grid');
+    grid.innerHTML = '';
+
+    deck.forEach(function(emoji) {
+      var karte = document.createElement('div');
+      karte.className = 'karte';
+      karte.dataset.emoji = emoji;
+      karte.innerHTML =
+        '<div class="karte-inner">' +
+          '<div class="vorne">❓</div>' +
+          '<div class="hinten">' + emoji + '</div>' +
+        '</div>';
+      karte.addEventListener('click', function() { karteKlick(karte); });
+      grid.appendChild(karte);
+    });
+  }
+
+  function karteKlick(karte) {
+    // Klick ignorieren wenn blockiert, schon offen oder schon gefunden
+    if (blockiert) return;
+    if (karte.classList.contains('offen')) return;
+    if (karte.classList.contains('gefunden')) return;
+
+    karte.classList.add('offen');
+    aufgedeckt.push(karte);
+
+    if (aufgedeckt.length === 2) {
+      blockiert = true;
+      zuege++;
+      document.getElementById('zuege').textContent = zuege;
+
+      var k1 = aufgedeckt[0];
+      var k2 = aufgedeckt[1];
+
+      if (k1.dataset.emoji === k2.dataset.emoji) {
+        // Paar gefunden!
+        k1.classList.add('gefunden');
+        k2.classList.add('gefunden');
+        gefunden++;
+        document.getElementById('paare').textContent = gefunden;
+        aufgedeckt = [];
+        blockiert = false;
+
+        if (gefunden === 8) {
+          setTimeout(function() {
+            document.getElementById('save-box').style.display = 'block';
+          }, 300);
+        }
+      } else {
+        // Kein Paar → nach kurzer Zeit wieder zudecken
+        setTimeout(function() {
+          k1.classList.remove('offen');
+          k2.classList.remove('offen');
+          aufgedeckt = [];
+          blockiert = false;
+        }, 900);
+      }
+    }
+  }
+
+  function speichern() {
+    var name  = document.getElementById('name-input').value.trim() || 'Anonym';
+    var score = Math.max(0, 500 - zuege * 10); // Weniger Züge = mehr Punkte
+
+    var liste = JSON.parse(localStorage.getItem('highscores') || '[]');
+    liste.push({ spiel: 'Memory', name: name, punkte: score });
+    liste.sort(function(a, b) { return b.punkte - a.punkte; });
+    localStorage.setItem('highscores', JSON.stringify(liste));
+
+    document.getElementById('save-msg').innerHTML =
+      '<p style="color:var(--green);margin-top:.5rem">✅ ' + score + ' Punkte gespeichert! ' +
+      '<a href="highscores.html" style="color:var(--primary)">Highscores ansehen →</a></p>';
+  }
+
+  neuesSpiel();
+</script>
+</body>
+</html>
